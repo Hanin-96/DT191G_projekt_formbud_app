@@ -1,0 +1,23 @@
+﻿.btn-submit {
+    width: 100%;
+    max-width: 30rem;
+    background-color: #E3A23C;
+    border: none;
+    padding: 1rem;
+    font-family: poppins;
+    box-shadow: 0 5px 5px -3px rgba(0, 0, 0, 0.2);
+}
+
+.form-title {
+    background-color: #6C6C6C;
+    padding: 1rem;
+    font-size: 2rem;
+    color: white;
+    max-width: 30rem;
+    width: 100%;
+    margin-bottom: 0rem;
+}
+
+
+
+
