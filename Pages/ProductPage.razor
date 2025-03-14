@@ -1,0 +1,143 @@
+﻿@page "/product/{id:int}"
+@using FormBudApp.Models;
+@inject HttpClient Http
+@inject NavigationManager NavManager
+
+
+<PageTitle>Product</PageTitle>
+
+
+<div class="product-container">
+    <div>
+        <h1>Product ID: @Id</h1>
+
+        @if (currentProduct != null)
+        {
+            <div>
+                <p>@currentProduct.ProductName</p>
+                <p>@currentProduct.Description</p>
+                <p>@currentProduct.Condition</p>
+            </div>
+        }
+    </div>
+    <div class="form-bid-wrap">
+
+
+        @if (bidList != null)
+        {
+            <div>
+                <div class="table-wrap">
+
+                    <table class="table table-bid">
+                        <thead>
+                            <tr class="form-title">
+                                <th>dagar kvar</th>
+                                <th>Budgivning</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            @foreach (var bid in bidList)
+                            {
+                                <tr>
+                                    <td>Budgivare @bid.BuyerId</td>
+                                    <td>@bid.Price</td>
+                                </tr>
+                            }
+                        </tbody>
+
+                        <tfoot>
+                            <tr>
+                                <td>
+                                    Senaste bud just nu:
+                                </td>
+
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        }
+        <EditForm Model=@bidRequest OnSubmit=@FormSubmitted class="bid-form-container">
+            <h2 class="form-title">Lägg till nytt bud</h2>
+            <div class="bid-form">
+                <div>
+                    <label>Namn:</label>
+                    <InputText @bind-Value=bidRequest.BuyerName class="form-control" id="BuyerName" />
+                </div>
+
+                <div>
+                    <label>E-post:</label>
+                    <input type="email" @bind-value=bidRequest.BuyerEmail class="form-control" id="BuyerEmail" />
+                </div>
+
+                <div>
+                    <label>Telefon:</label>
+                    <input type="tel" @bind-value=bidRequest.BuyerPhone class="form-control" id="BuyerPhone" />
+                </div>
+
+                <div>
+                    <label>Bud:</label>
+                    <InputNumber @bind-Value=bidRequest.Price class="form-control" id="Price" />
+                </div>
+            </div>
+
+            <input type="submit" class="btn-submit" value="Lägg bud" />
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    //Produkts id som hämtas från url
+    [Parameter]
+    public int Id { get; set; }
+
+    //Modell för formulär som skickas in
+    private BidRequest bidRequest = new BidRequest();
+    //En lista på en produkts bud
+    private Bid[]? bidList;
+
+    //Sidans produkt
+    private Product? currentProduct;
+
+    //Onload funktion som körs vid laddning
+    protected override void OnInitialized()
+    {
+        //Sätter bidRequest produktId till Id som hämtas i url
+        bidRequest.ProductId = Id;
+
+    }
+
+    //Vid asykront laddning ska en lista av bids och produkten hämtas med GET anrop
+    protected override async Task OnInitializedAsync()
+    {
+        bidList = await Http.GetFromJsonAsync<Bid[]>("http://localhost:5021/api/bid/" + Id);
+
+        //Hämtar all info om specifik produkt
+        currentProduct = await Http.GetFromJsonAsync<Product>("http://localhost:5021/api/products/" + Id);
+
+    }
+
+    //Skickar formuläret via POST anrop till API:et
+    private async Task FormSubmitted(EditContext editContext)
+    {
+        //Validerar om formuläret är korrekt
+        bool formIsValid = editContext.Validate();
+
+        //om valideringen är korrekt
+        if (formIsValid)
+        {
+            //Skapa ny HttpClient och lägger ett bud
+            HttpClient httpClient = new HttpClient();
+            var response = await httpClient.PostAsJsonAsync("http://localhost:5021/api/bid", bidRequest);
+            if (response.StatusCode == System.Net.HttpStatusCode.Created)
+            {
+                //Laddar om sidan om budet gick att skicka in
+                NavManager.NavigateTo(NavManager.Uri, true);
+            }
+        }
+    }
+
+
+
+}
