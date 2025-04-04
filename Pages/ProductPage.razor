@@ -2,6 +2,7 @@
 @using FormBudApp.Models;
 @inject HttpClient Http
 @inject NavigationManager NavManager
+@implements IDisposable
 
 
 <PageTitle>Product</PageTitle>
@@ -9,21 +10,19 @@
 
 <div class="product-container">
     <div>
-        <h1>Product ID: @Id</h1>
 
-        @if (currentProduct != null)
+        @if (CurrentProduct != null)
         {
+            <h1>@CurrentProduct.ProductName</h1>
             <div>
-                <p>@currentProduct.ProductName</p>
-                <p>@currentProduct.Description</p>
-                <p>@currentProduct.Condition</p>
+                <p>@CurrentProduct.Description</p>
+                <p>@CurrentProduct.Condition</p>
             </div>
         }
     </div>
     <div class="form-bid-wrap">
 
-
-        @if (bidList != null)
+        @if (BidList != null)
         {
             <div>
                 <div class="table-wrap">
@@ -31,13 +30,13 @@
                     <table class="table table-bid">
                         <thead>
                             <tr class="form-title">
-                                <th>dagar kvar</th>
+                                <th>@TimeDeadlineString</th>
                                 <th>Budgivning</th>
                             </tr>
                         </thead>
 
                         <tbody>
-                            @foreach (var bid in bidList)
+                            @foreach (var bid in BidList)
                             {
                                 <tr>
                                     <td>Budgivare @bid.BuyerId</td>
@@ -48,9 +47,18 @@
 
                         <tfoot>
                             <tr>
-                                <td>
-                                    Senaste bud just nu:
-                                </td>
+                                @if (LatestBid != null)
+                                {
+                                    <td>
+                                        Senaste bud just nu: @LatestBid.Price
+                                    </td>
+                                }
+                                else
+                                {
+                                    <td>
+                                        Inga bud just nu
+                                    </td>
+                                }
 
                             </tr>
                         </tfoot>
@@ -58,32 +66,64 @@
                 </div>
             </div>
         }
-        <EditForm Model=@bidRequest OnSubmit=@FormSubmitted class="bid-form-container">
-            <h2 class="form-title">Lägg till nytt bud</h2>
-            <div class="bid-form">
-                <div>
-                    <label>Namn:</label>
-                    <InputText @bind-Value=bidRequest.BuyerName class="form-control" id="BuyerName" />
-                </div>
+        else
+        {
+            <div>
+                <div class="table-wrap">
 
-                <div>
-                    <label>E-post:</label>
-                    <input type="email" @bind-value=bidRequest.BuyerEmail class="form-control" id="BuyerEmail" />
-                </div>
+                    <table class="table table-bid">
+                        <thead>
+                            <tr class="form-title">
+                                <th>@TimeDeadlineString</th>
+                                <th>Budgivning</th>
+                            </tr>
+                        </thead>
 
-                <div>
-                    <label>Telefon:</label>
-                    <input type="tel" @bind-value=bidRequest.BuyerPhone class="form-control" id="BuyerPhone" />
-                </div>
+                        <tbody>
+                        </tbody>
 
-                <div>
-                    <label>Bud:</label>
-                    <InputNumber @bind-Value=bidRequest.Price class="form-control" id="Price" />
+                        <tfoot>
+                            <tr>
+                                <td>
+                                    Inga bud just nu
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
                 </div>
             </div>
+        }
+        @if (TimeIsUp == false)
+        {
+            <EditForm Model=@BidRequest OnSubmit=@FormSubmitted class="bid-form-container">
+                <h2 class="form-title">Lägg till nytt bud</h2>
+                <div class="bid-form">
+                    <div>
+                        <label>Namn:</label>
+                        <InputText @bind-Value=BidRequest.BuyerName class="form-control" id="BuyerName" />
+                    </div>
 
-            <input type="submit" class="btn-submit" value="Lägg bud" />
-        </EditForm>
+                    <div>
+                        <label>E-post:</label>
+                        <input type="email" @bind-value=BidRequest.BuyerEmail class="form-control" id="BuyerEmail" />
+                    </div>
+
+                    <div>
+                        <label>Telefon:</label>
+                        <input type="tel" @bind-value=BidRequest.BuyerPhone class="form-control" id="BuyerPhone" />
+                    </div>
+
+                    <div>
+                        <label>Bud:</label>
+                        <InputNumber @bind-Value=BidRequest.Price class="form-control" id="Price" />
+                    </div>
+                </div>
+
+                <input type="submit" class="btn-submit" value="Lägg bud" />
+            </EditForm>
+
+        }
+
     </div>
 </div>
 
@@ -92,30 +132,110 @@
     [Parameter]
     public int Id { get; set; }
 
+    //Variabel för senaste/högsta bud
+    public Bid? LatestBid { get; set; }
+
+    //Variabel för när tiden är ute
+    public bool TimeIsUp { get; set; } = false;
+
+    //Variabel som visar tid som är kvar på budgivning
+    public TimeSpan TimeDeadline { get; set; }
+    public string? TimeDeadlineString { get; set; }
+    private Timer? DeadlineTimer;
+
+
+
     //Modell för formulär som skickas in
-    private BidRequest bidRequest = new BidRequest();
+    private BidRequest BidRequest = new BidRequest();
     //En lista på en produkts bud
-    private Bid[]? bidList;
+    private Bid[]? BidList;
 
     //Sidans produkt
-    private Product? currentProduct;
+    private Product? CurrentProduct;
 
     //Onload funktion som körs vid laddning
     protected override void OnInitialized()
     {
         //Sätter bidRequest produktId till Id som hämtas i url
-        bidRequest.ProductId = Id;
+        BidRequest.ProductId = Id;
 
     }
 
     //Vid asykront laddning ska en lista av bids och produkten hämtas med GET anrop
     protected override async Task OnInitializedAsync()
     {
-        bidList = await Http.GetFromJsonAsync<Bid[]>("http://localhost:5021/api/bid/" + Id);
+        BidList = await Http.GetFromJsonAsync<Bid[]>("http://localhost:5021/api/bid/" + Id);
+
+        if (BidList?.Length > 0)
+        {
+            //Returnera högsta bud
+            LatestBid = BidList?.OrderByDescending(b => b.Price).ToList()[0];
+        }
 
         //Hämtar all info om specifik produkt
-        currentProduct = await Http.GetFromJsonAsync<Product>("http://localhost:5021/api/products/" + Id);
+        CurrentProduct = await Http.GetFromJsonAsync<Product>("http://localhost:5021/api/products/" + Id);
+        SetDeadlineTime();
 
+    }
+
+    //Sätta tiden för deadline
+    private void SetDeadlineTime()
+    {
+        if (CurrentProduct == null)
+        {
+            return;
+        }
+        //Tid som är kvar
+        TimeDeadline = CurrentProduct.TimeLeft - DateTime.Now;
+        if (TimeDeadline.Days > 1)
+        {
+            TimeDeadlineString = TimeDeadline.ToString("%d") + " dagar kvar";
+        }
+        else if (TimeDeadline.Seconds < 0)
+        {
+            DeadlineHit();
+
+        }
+        else
+        {
+            TimeDeadlineString = TimeDeadline.ToString(@"hh\:mm\:ss");
+            //Uppdaterar tiden varje sekund med timer
+            DeadlineTimer = new Timer(updateTime, null, 0, 1000);
+        }
+    }
+
+    private void DeadlineHit()
+    {
+        TimeDeadlineString = "Tiden är ute";
+        TimeIsUp = true;
+
+    }
+
+    private void updateTime(object? state)
+    {
+        if (CurrentProduct == null)
+        {
+            return;
+        }
+        TimeDeadline = CurrentProduct.TimeLeft - DateTime.Now;
+
+        if (TimeDeadline.Seconds < 0)
+        {
+            RefreshPage();
+
+        }
+        else
+        {
+            TimeDeadlineString = TimeDeadline.ToString(@"hh\:mm\:ss");
+            InvokeAsync(StateHasChanged);
+        }
+
+    }
+
+    //Frigöra resurser när timer inte behövs längre, bättre prestanda
+    public void Dispose()
+    {
+        DeadlineTimer?.Dispose();
     }
 
     //Skickar formuläret via POST anrop till API:et
@@ -129,13 +249,19 @@
         {
             //Skapa ny HttpClient och lägger ett bud
             HttpClient httpClient = new HttpClient();
-            var response = await httpClient.PostAsJsonAsync("http://localhost:5021/api/bid", bidRequest);
+            var response = await httpClient.PostAsJsonAsync("http://localhost:5021/api/bid", BidRequest);
             if (response.StatusCode == System.Net.HttpStatusCode.Created)
             {
-                //Laddar om sidan om budet gick att skicka in
-                NavManager.NavigateTo(NavManager.Uri, true);
+                RefreshPage();
             }
         }
+    }
+
+    private void RefreshPage()
+    {
+        //Laddar om sidan om budet gick att skicka in
+        NavManager.NavigateTo(NavManager.Uri, true);
+
     }
 
 

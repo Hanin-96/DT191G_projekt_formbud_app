@@ -69,6 +69,10 @@
     padding: 1rem;
 }
 
+.table th {
+    font-size: 2rem;
+}
+
 .form-bid-wrap {
     max-width: 30rem;
     width: 100%;
