@@ -18,6 +18,9 @@
                 <p>@CurrentProduct.Description</p>
                 <p>@CurrentProduct.Condition</p>
             </div>
+            <div>
+                <img style="width: 300px; height: auto;" src="http://localhost:5021/images/@CurrentProduct.ImageName" alt="produktbild" />
+            </div>
         }
     </div>
     <div class="form-bid-wrap">
@@ -142,6 +145,9 @@
     public TimeSpan TimeDeadline { get; set; }
     public string? TimeDeadlineString { get; set; }
     private Timer? DeadlineTimer;
+
+    //Img
+    public string? FileName { get; set; }
 
 
 

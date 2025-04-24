@@ -1,4 +1,6 @@
-﻿namespace FormBudApp.Models
+﻿using System.ComponentModel.DataAnnotations.Schema;
+
+namespace FormBudApp.Models
 {
     public class Product
     {
@@ -11,5 +13,6 @@
         public string? Condition { get; set; }
         public DateTime TimeLeft { get; set; }
         public bool IsSold { get; set; } = false;
+        public string? ImageName { get; set; }
     }
 }
