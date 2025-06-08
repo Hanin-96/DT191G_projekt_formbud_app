@@ -6,49 +6,50 @@
 
 <PageTitle>Produkter</PageTitle>
 
-<h1>Hello, world!</h1>
 
 
-
-@if (productList == null)
+@if (ProductList == null)
 {
     <p><em>Laddar produkter...</em></p>
 }
 else
 {
     <div class="table-wrap">
-
+        <h1 class="page-title">Produkter</h1>
         <div class="article-container">
-                @foreach (var product in productList)
-                {
-                    <article>
-                        <p>@product.ProductName</p>
-                        <p>@product.TimeLeft</p>
+            @foreach (var product in ProductList)
+            {
+                <article>
+                    <p>@product.ProductName</p>
+                    <p>@product.TimeLeft</p>
 
-                        @if (product.IsSold == false)
-                        {
-                            <p>Inte såld</p>
-                        }
-                        else
-                        {
-                            <p>Såld</p>
-                        }
-                        <button><NavLink class="btn btn-primary" href="@($"/product/{product.Id}")">Till produkt</NavLink></button>
+                    @if (product.IsSold == false)
+                    {
+                        <p>Inte såld</p>
+                    }
+                    else
+                    {
+                        <p>Såld</p>
+                    }
+                    <div>
+                        <img style="width: 200px; height: 200px; object-fit:cover;" src="http://localhost:5021/images/@product.ImageName" alt="produktbild" />
+                    </div>
+                    <a class="btn-product" href="@($"/product/{product.Id}")">Till produkt</a>
 
-                    </article>
-                }
-            </div>
+                </article>
+            }
+        </div>
     </div>
 }
 
 @code {
-   
 
-    private Product[]? productList;
+
+    private Product[]? ProductList;
 
     protected override async Task OnInitializedAsync()
     {
-        productList = await Http.GetFromJsonAsync<Product[]>("http://localhost:5021/api/products");
+        ProductList = await Http.GetFromJsonAsync<Product[]>("http://localhost:5021/api/products");
     }
 
 

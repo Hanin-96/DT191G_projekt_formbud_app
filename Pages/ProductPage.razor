@@ -9,17 +9,20 @@
 
 
 <div class="product-container">
-    <div>
+    <div class="product-wrap">
 
         @if (CurrentProduct != null)
         {
-            <h1>@CurrentProduct.ProductName</h1>
             <div>
-                <p>@CurrentProduct.Description</p>
-                <p>@CurrentProduct.Condition</p>
+                <h1>@CurrentProduct.ProductName</h1>
+                <div>
+                    <p>@CurrentProduct.Description</p>
+                    <p><span>Skick: </span>@CurrentProduct.Condition</p>
+                    <p><span>Värde: </span>@CurrentProduct.Worth</p>
+                </div>
             </div>
             <div>
-                <img style="width: 300px; height: auto;" src="http://localhost:5021/images/@CurrentProduct.ImageName" alt="produktbild" />
+                <img style="width: 300px; height: auto;" src="http://localhost:5021/images/@CurrentProduct.ImageName" alt="produktbild" class="product-img" />
             </div>
         }
     </div>
@@ -52,9 +55,18 @@
                             <tr>
                                 @if (LatestBid != null)
                                 {
-                                    <td>
-                                        Senaste bud just nu: @LatestBid.Price
-                                    </td>
+                                    if (LatestBid.Price >= CurrentProduct?.MinPrice)
+                                    {
+                                        <td class="acceptedBid">
+                                            Senaste bud just nu: @LatestBid.Price
+                                        </td>
+                                    }
+                                    else if (LatestBid.Price < CurrentProduct?.MinPrice)
+                                    {
+                                        <td class="lowBid">
+                                            Senaste bud just nu: @LatestBid.Price
+                                        </td>
+                                    }
                                 }
                                 else
                                 {
@@ -253,9 +265,8 @@
         //om valideringen är korrekt
         if (formIsValid)
         {
-            //Skapa ny HttpClient och lägger ett bud
-            HttpClient httpClient = new HttpClient();
-            var response = await httpClient.PostAsJsonAsync("http://localhost:5021/api/bid", BidRequest);
+            //lägger ett bud
+            var response = await Http.PostAsJsonAsync("http://localhost:5021/api/bid", BidRequest);
             if (response.StatusCode == System.Net.HttpStatusCode.Created)
             {
                 RefreshPage();

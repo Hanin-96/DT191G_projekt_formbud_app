@@ -1,4 +1,23 @@
 ﻿.article-container {
     display: flex;
     gap: 2rem;
+    justify-content: left;
+    max-width: 1000px;
+    width: 100%;
+    flex-wrap: wrap;
+    margin: 0 auto;
 }
+
+.page-title {
+    text-align: center;
+}
+.btn-product {
+    padding: 1rem;
+    background-color: #1e1e1e;
+    width: 100%;
+    color: white !important;
+    display: block;
+    text-align: center;
+}
+
+
